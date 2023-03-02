@@ -10,7 +10,7 @@ const requestOptions = {
     redirect: 'follow'
 };
 
-for (let i = 1; i < 6; i++) {
+for (let i = 1; i < 6; i++) { //creates 5 future forecast boxes
     let div1 = $('<div>').addClass('col card mx-1 bg-dark');
     let h6 = $('<h6>').addClass('card-header text-info text-center').attr('id', 'h6' + i);
     let div2 = $('<div>').addClass('card-body text-light bg-secondary');
@@ -23,7 +23,7 @@ for (let i = 1; i < 6; i++) {
     $('#5dayBody').append(div1);
 }
 
-if (pastSelect) {
+if (pastSelect) { //checks if there is any local data stored
     console.log(pastSelect);
     lat = pastSelect[0].lat;
     lon = pastSelect[0].lon;
@@ -31,14 +31,14 @@ if (pastSelect) {
     getWeather();
 } else if (storedCoordinates) {
     stored();
-} else {
+} else { //Default location
     storedCoordinates = [];
     lat = 40.7127281;
     lon = -74.0060152;
     getWeather();
 };
 
-function stored() {
+function stored() { // retrieves last stored coordinate
     console.log('We doing the stored thing');
     console.log('storedCoordinates result: ');
     console.log(storedCoordinates);
@@ -49,11 +49,11 @@ function stored() {
     getWeather();
 };
 
-$('#searchBtn').on('click', searchNow);
+$('#searchBtn').on('click', searchNow); // search button listener
 
-function searchNow() {
+function searchNow() { // search new city function
     searchInp = $('#searchInp').val();
-    if (searchInp.length) {
+    if (searchInp.length) { //checks if we have any input
         console.log('New search for: ' + searchInp);
         cnt = storedCoordinates.length;
         console.log(cnt);
@@ -61,30 +61,31 @@ function searchNow() {
     }
 };
 
-function pastSearches() {
+function pastSearches() { //creates past search nuttons
     console.log('Printing past search butons');
     console.log(storedCoordinates.length);
     for (cnt; cnt < storedCoordinates.length; cnt++) {
         let li = $('<li>').addClass('add-project-btn');
         let btn = $('<button>').addClass('btn btn-secondary px-5 py-1 my-1 text-light');
-        btn.attr('id', 'btn' + cnt);
-        console.log('button '+cnt+' created');
-        btn.text(storedCoordinates[cnt].city);
+        btn.attr('id', cnt);
+        console.log('button ' + cnt + ' created');
         li.append(btn);
         $('#ul-custom').append(li);
-        $('#btn' + cnt).on('click', function(){
-            console.log('im pressing a button'+cnt);
-
-            lat = storedCoordinates[cnt].lat;
-            lon = storedCoordinates[cnt].lon;
+        $('#' + cnt).on('click', function () {
+            const id = this.id;
+            console.log(id);
+            lat = storedCoordinates[id].lat;
+            lon = storedCoordinates[id].lon;
+            console.log(lat);
+            console.log(lon);
             getWeather();
         });
     };
 
-    
+    for (let cnt2 = 0; cnt2 < storedCoordinates.length; cnt2++) { $('#' + cnt2).text(storedCoordinates[cnt2].city) };
 };
 
-function getCoord() {
+function getCoord() { //searches the city and coordinates
     fetch('https://api.openweathermap.org/geo/1.0/direct?q=' + searchInp + ',US&limit=1&appid=d08b1379cfe23a7e58b700d18c0903c9', requestOptions)
         .then(response => response.json())
         .then(result => {
@@ -101,7 +102,7 @@ function getCoord() {
 
                 let coordinates = { city: result[0].name, lat: lat, lon: lon };
                 storedCoordinates.unshift(coordinates);
-                storedCoordinates.splice(5);
+                storedCoordinates.splice(8);
                 localStorage.setItem('storedCoordinates', JSON.stringify(storedCoordinates));
                 console.log('New city and coordinates stored: ');
                 console.log(coordinates);
@@ -111,28 +112,42 @@ function getCoord() {
         .catch(error => console.log('error', error));
 };
 
-function getWeather() {
-    fetch('https://api.openweathermap.org/data/2.5/forecast?lat=' + lat + '&lon=' + lon + '&appid=d08b1379cfe23a7e58b700d18c0903c9&units=imperial', requestOptions)
+function getWeather() { //gets cutrrent and future weather from the API
+
+    fetch('https://api.openweathermap.org/data/2.5/weather?lat=' + lat + '&lon=' + lon + '&appid=d08b1379cfe23a7e58b700d18c0903c9&units=imperial', requestOptions)
         .then(response => response.json())
         .then(result => {
             console.log('getWeather result: ');
             console.log(result);
 
-            $('#cityName').text(result.city.name + ' (' + dayjs(result.list[0].dt_txt).format('MM/DD/YYYY') + ') ');
-            $('#emoji').attr('src', 'http://openweathermap.org/img/w/' + result.list[0].weather[0].icon + '.png');
-            $('#temp0').text('Temp: ' + result.list[0].main.temp + ' ºF');
-            $('#wind0').text('Speed: ' + result.list[0].wind.speed + ' mph');
-            $('#hum0').text('Humidity: ' + result.list[0].main.humidity + ' %');
-            $('#sunR0').text('Sunrise: ' + new Date(result.city.sunrise * 1000).toLocaleTimeString());
-            $('#sunS0').text('Sunset: ' + new Date(result.city.sunset * 1000).toLocaleTimeString());
+            $('#cityName').text(result.name + ' (' + dayjs(result.dt * 1000).format('MM/DD/YYYY') + ') ');
+            $('#emoji').attr('src', 'http://openweathermap.org/img/w/' + result.weather[0].icon + '.png');
+            $('#temp0').text('Temp: ' + result.main.temp + ' ºF');
+            $('#wind0').text('Speed: ' + result.wind.speed + ' mph');
+            $('#hum0').text('Humidity: ' + result.main.humidity + ' %');
+            $('#sunR0').text('Sunrise: ' + new Date(result.sys.sunrise * 1000).toLocaleTimeString());
+            $('#sunS0').text('Sunset: ' + new Date(result.sys.sunset * 1000).toLocaleTimeString());
 
-            for (var i = 1; i < 6; i++) {
-                $('#h6' + i).text(dayjs(result.list[i * 8 - 1].dt_txt).format('MM/DD/YYYY'));
-                $('#sun' + i).attr('src', 'http://openweathermap.org/img/w/' + result.list[i * 8 - 1].weather[0].icon + '.png');
-                $('#temp' + i).text('Temp: ' + result.list[i * 8 - 1].main.temp + ' ºF');
-                $('#wind' + i).text('Wind: ' + result.list[i * 8 - 1].wind.speed + ' mph');
-                $('#hum' + i).text('Humidity: ' + result.list[i * 8 - 1].main.humidity + ' %');
-            }
+
         })
-        .catch(error => console.log('error', error));
+        .then(
+            fetch('https://api.openweathermap.org/data/2.5/forecast?lat=' + lat + '&lon=' + lon + '&appid=d08b1379cfe23a7e58b700d18c0903c9&units=imperial', requestOptions)
+                .then(response => response.json())
+                .then(result => {
+                    console.log('getWeather result: ');
+                    console.log(result);
+                    for (var i = 1; i < 6; i++) {
+                        var iPlus = (i-1) * 8;
+                        $('#h6' + i).text(dayjs(result.list[iPlus].dt_txt).format('MM/DD/YYYY'));
+                        $('#sun' + i).attr('src', 'http://openweathermap.org/img/w/' + result.list[iPlus].weather[0].icon + '.png');
+                        $('#temp' + i).text('Temp: ' + result.list[iPlus].main.temp + ' ºF');
+                        $('#wind' + i).text('Wind: ' + result.list[iPlus].wind.speed + ' mph');
+                        $('#hum' + i).text('Humidity: ' + result.list[iPlus].main.humidity + ' %');
+                    }
+                })
+            .catch(error => console.log('error', error))
+
+
+        )
+    .catch(error => console.log('error', error));
 };

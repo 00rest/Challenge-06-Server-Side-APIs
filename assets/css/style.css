@@ -11,20 +11,7 @@
   
 }
 
-
-
 .add-project-btn {
     display: flex;
     justify-content: center;
-}
-
-/*
-.px-5 {
-    padding-right: 40% !important;
-    padding-left: 40% !important;
-
-}
-
-.card-body-custom{
-    display: flex !important;
 }
